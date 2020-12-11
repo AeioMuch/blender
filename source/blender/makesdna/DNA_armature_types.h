@@ -87,8 +87,8 @@ typedef struct Bone {
   float curve_out_x, curve_out_y;
   /** Length of bezier handles. */
   float ease1, ease2;
-  float scale_in_x, scale_in_y;
-  float scale_out_x, scale_out_y;
+  float scale_in_x, scale_in_y, scale_in_len;
+  float scale_out_x, scale_out_y, scale_out_len;
 
   /**  patch for upward compat, UNUSED!. */
   float size[3];
@@ -257,6 +257,10 @@ typedef enum eBone_Flag {
   BONE_TRANSFORM_MIRROR = (1 << 25),
   /** this bone is associated with a locked vertex group, ONLY USE FOR DRAWING */
   BONE_DRAW_LOCKED_WEIGHT = (1 << 26),
+  /** Multiply B-Bone easing values with Scale Length. */
+  BONE_SCALE_EASING = (1 << 27),
+  /** Apply Y scale to B-Bone segments. */
+  BONE_SCALE_SEGMENTS = (1 << 28),
 } eBone_Flag;
 
 /* bone->inherit_scale_mode */

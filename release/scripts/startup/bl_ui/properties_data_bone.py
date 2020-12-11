@@ -170,14 +170,19 @@ class BONE_PT_curved(BoneButtonsPanel, Panel):
         col = topcol.column(align=True)
         col.prop(bbone, "bbone_scaleinx", text="Scale In X")
         col.prop(bbone, "bbone_scaleiny", text="In Y")
+        col.prop(bbone, "bbone_scalein_len", text="In Len")
 
         col = topcol.column(align=True)
         col.prop(bbone, "bbone_scaleoutx", text="Scale Out X")
         col.prop(bbone, "bbone_scaleouty", text="Out Y")
+        col.prop(bbone, "bbone_scaleout_len", text="Out Len")
+
+        topcol.prop(bone, "use_scale_segments")
 
         col = topcol.column(align=True)
         col.prop(bbone, "bbone_easein", text="Ease In")
         col.prop(bbone, "bbone_easeout", text="Out")
+        col.prop(bone, "use_scale_easing")
 
         col = topcol.column(align=True)
         col.prop(bone, "bbone_handle_type_start", text="Start Handle")

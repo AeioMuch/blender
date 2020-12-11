@@ -769,6 +769,21 @@ void rna_def_bone_curved_common(StructRNA *srna, bool is_posebone, bool is_editb
   RNA_def_property_ui_text(prop, "Ease Out", "Length of second Bezier Handle (for B-Bones only)");
   RNA_DEF_CURVEBONE_UPDATE(prop, is_posebone, is_editbone);
 
+  if (is_posebone == false) {
+    prop = RNA_def_property(srna, "use_scale_easing", PROP_BOOLEAN, PROP_NONE);
+    RNA_def_property_ui_text(
+        prop, "Scale Easing", "Multiply the final easing values with scale length");
+    RNA_def_property_boolean_sdna(prop, NULL, "flag", BONE_SCALE_EASING);
+    RNA_def_property_clear_flag(prop, PROP_ANIMATABLE);
+    RNA_def_property_update(prop, 0, "rna_Armature_dependency_update");
+
+    prop = RNA_def_property(srna, "use_scale_segments", PROP_BOOLEAN, PROP_NONE);
+    RNA_def_property_ui_text(prop, "Scale Segment Length", "Scale segments in the Y direction");
+    RNA_def_property_boolean_sdna(prop, NULL, "flag", BONE_SCALE_SEGMENTS);
+    RNA_def_property_clear_flag(prop, PROP_ANIMATABLE);
+    RNA_def_property_update(prop, 0, "rna_Armature_dependency_update");
+  }
+
   /* Scale In/Out */
   prop = RNA_def_property(srna, "bbone_scaleinx", PROP_FLOAT, PROP_NONE);
   RNA_def_property_float_sdna(prop, NULL, "scale_in_x");
@@ -792,6 +807,18 @@ void rna_def_bone_curved_common(StructRNA *srna, bool is_posebone, bool is_editb
                            "adjusts thickness (for tapering effects)");
   RNA_DEF_CURVEBONE_UPDATE(prop, is_posebone, is_editbone);
 
+  prop = RNA_def_property(srna, "bbone_scalein_len", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "scale_in_len");
+  RNA_def_property_flag(prop, PROP_PROPORTIONAL);
+  RNA_def_property_range(prop, 0.0001f, FLT_MAX);
+  RNA_def_property_ui_range(prop, 0.0f, FLT_MAX, 1, 3);
+  RNA_def_property_float_default(prop, 1.0f);
+  RNA_def_property_ui_text(prop,
+                           "Scale In Length",
+                           "Lengthwise-axis scale factor for start of the B-Bone, "
+                           "creates uneven segment length");
+  RNA_DEF_CURVEBONE_UPDATE(prop, is_posebone, is_editbone);
+
   prop = RNA_def_property(srna, "bbone_scaleoutx", PROP_FLOAT, PROP_NONE);
   RNA_def_property_float_sdna(prop, NULL, "scale_out_x");
   RNA_def_property_flag(prop, PROP_PROPORTIONAL);
@@ -812,6 +839,18 @@ void rna_def_bone_curved_common(StructRNA *srna, bool is_posebone, bool is_editb
                            "Scale Out Y",
                            "Y-axis scale factor for end of the B-Bone, "
                            "adjusts thickness (for tapering effects)");
+  RNA_DEF_CURVEBONE_UPDATE(prop, is_posebone, is_editbone);
+
+  prop = RNA_def_property(srna, "bbone_scaleout_len", PROP_FLOAT, PROP_NONE);
+  RNA_def_property_float_sdna(prop, NULL, "scale_out_len");
+  RNA_def_property_flag(prop, PROP_PROPORTIONAL);
+  RNA_def_property_range(prop, 0.0001f, FLT_MAX);
+  RNA_def_property_ui_range(prop, 0.0f, FLT_MAX, 1, 3);
+  RNA_def_property_float_default(prop, 1.0f);
+  RNA_def_property_ui_text(prop,
+                           "Scale Out Length",
+                           "Lengthwise-axis scale factor for the end of the B-Bone, "
+                           "creates uneven segment length");
   RNA_DEF_CURVEBONE_UPDATE(prop, is_posebone, is_editbone);
 
 #  undef RNA_DEF_CURVEBONE_UPDATE

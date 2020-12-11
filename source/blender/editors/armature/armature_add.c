@@ -96,8 +96,11 @@ EditBone *ED_armature_ebone_add(bArmature *arm, const char *name)
   bone->ease2 = 1.0f;
   bone->scale_in_x = 1.0f;
   bone->scale_in_y = 1.0f;
+  bone->scale_in_len = 1.0f;
   bone->scale_out_x = 1.0f;
   bone->scale_out_y = 1.0f;
+  bone->scale_out_len = 1.0f;
+  // bone->flag |= BONE_SCALE_EASING | BONE_SCALE_SEGMENTS;
 
   return bone;
 }
@@ -1467,8 +1470,10 @@ static int armature_extrude_exec(bContext *C, wmOperator *op)
             newbone->ease2 = ebone->ease2;
             newbone->scale_in_x = ebone->scale_in_x;
             newbone->scale_in_y = ebone->scale_in_y;
+            newbone->scale_in_len = ebone->scale_in_len;
             newbone->scale_out_x = ebone->scale_out_x;
             newbone->scale_out_y = ebone->scale_out_y;
+            newbone->scale_out_len = ebone->scale_out_len;
 
             BLI_strncpy(newbone->name, ebone->name, sizeof(newbone->name));
 
