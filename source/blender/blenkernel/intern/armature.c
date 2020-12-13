@@ -963,7 +963,7 @@ void BKE_pchan_bbone_spline_params_get(struct bPoseChannel *pchan,
 {
   bPoseChannel *next, *prev;
   Bone *bone = pchan->bone;
-  float imat[4][4], posemat[4][4];
+  float imat[4][4], posemat[4][4], tmpmat[4][4];
   float delta[3];
 
   memset(param, 0, sizeof(*param));
@@ -971,7 +971,7 @@ void BKE_pchan_bbone_spline_params_get(struct bPoseChannel *pchan,
   param->segments = bone->segments;
   param->length = bone->length;
 
-  param->do_scale_segments = !!(bone->flag & BONE_SCALE_SEGMENTS);
+  param->do_scale_segments = !!(bone->bbone_flag & BBONE_SCALE_SEGMENTS);
 
   if (!rest) {
     float scale[3];
@@ -1001,6 +1001,11 @@ void BKE_pchan_bbone_spline_params_get(struct bPoseChannel *pchan,
   else {
     invert_m4_m4(imat, pchan->pose_mat);
   }
+
+  float prev_scale[3], next_scale[3];
+
+  copy_v3_fl(prev_scale, 1.0f);
+  copy_v3_fl(next_scale, 1.0f);
 
   if (prev) {
     float h1[3];
@@ -1047,6 +1052,12 @@ void BKE_pchan_bbone_spline_params_get(struct bPoseChannel *pchan,
     if (!param->prev_bbone) {
       /* Find the previous roll to interpolate. */
       mul_m4_m4m4(param->prev_mat, imat, rest ? prev->bone->arm_mat : prev->pose_mat);
+
+      /* Retrieve the local scale of the bone if necessary. */
+      if ((bone->bbone_prev_flag & BBONE_HANDLE_SCALE_ANY) && !rest) {
+        BKE_armature_mat_pose_to_bone(prev, prev->pose_mat, tmpmat);
+        mat4_to_size(prev_scale, tmpmat);
+      }
     }
   }
 
@@ -1094,6 +1105,12 @@ void BKE_pchan_bbone_spline_params_get(struct bPoseChannel *pchan,
 
     /* Find the next roll to interpolate as well. */
     mul_m4_m4m4(param->next_mat, imat, rest ? next->bone->arm_mat : next->pose_mat);
+
+    /* Retrieve the local scale of the bone if necessary. */
+    if ((bone->bbone_next_flag & BBONE_HANDLE_SCALE_ANY) && !rest) {
+      BKE_armature_mat_pose_to_bone(next, next->pose_mat, tmpmat);
+      mat4_to_size(next_scale, tmpmat);
+    }
   }
 
   /* Add effects from bbone properties over the top
@@ -1117,7 +1134,7 @@ void BKE_pchan_bbone_spline_params_get(struct bPoseChannel *pchan,
     param->roll1 = bone->roll1 + (!rest ? pchan->roll1 : 0.0f);
     param->roll2 = bone->roll2 + (!rest ? pchan->roll2 : 0.0f);
 
-    if (bone->flag & BONE_ADD_PARENT_END_ROLL) {
+    if (bone->bbone_flag & BBONE_ADD_PARENT_END_ROLL) {
       if (prev) {
         if (prev->bone) {
           param->roll1 += prev->bone->roll2;
@@ -1143,7 +1160,7 @@ void BKE_pchan_bbone_spline_params_get(struct bPoseChannel *pchan,
     param->curve_out_x = bone->curve_out_x + (!rest ? pchan->curve_out_x : 0.0f);
     param->curve_out_y = bone->curve_out_y + (!rest ? pchan->curve_out_y : 0.0f);
 
-    if (bone->flag & BONE_SCALE_EASING) {
+    if (bone->bbone_flag & BBONE_SCALE_EASING) {
       param->ease1 *= param->scale_in_len;
       param->curve_in_x *= param->scale_in_len;
       param->curve_in_y *= param->scale_in_len;
@@ -1151,6 +1168,37 @@ void BKE_pchan_bbone_spline_params_get(struct bPoseChannel *pchan,
       param->ease2 *= param->scale_out_len;
       param->curve_out_x *= param->scale_out_len;
       param->curve_out_y *= param->scale_out_len;
+    }
+
+    /* Custom handle scale. */
+    if (bone->bbone_prev_flag & BBONE_HANDLE_SCALE_X) {
+      param->scale_in_x *= prev_scale[0];
+    }
+    if (bone->bbone_prev_flag & BBONE_HANDLE_SCALE_Y) {
+      param->scale_in_y *= prev_scale[2];
+    }
+    if (bone->bbone_prev_flag & BBONE_HANDLE_SCALE_LEN) {
+      param->scale_in_len *= prev_scale[1];
+    }
+    if (bone->bbone_prev_flag & BBONE_HANDLE_SCALE_EASE) {
+      param->ease1 *= prev_scale[1];
+      param->curve_in_x *= prev_scale[1];
+      param->curve_in_y *= prev_scale[1];
+    }
+
+    if (bone->bbone_next_flag & BBONE_HANDLE_SCALE_X) {
+      param->scale_out_x *= next_scale[0];
+    }
+    if (bone->bbone_next_flag & BBONE_HANDLE_SCALE_Y) {
+      param->scale_out_y *= next_scale[2];
+    }
+    if (bone->bbone_next_flag & BBONE_HANDLE_SCALE_LEN) {
+      param->scale_out_len *= next_scale[1];
+    }
+    if (bone->bbone_next_flag & BBONE_HANDLE_SCALE_EASE) {
+      param->ease2 *= next_scale[1];
+      param->curve_out_x *= next_scale[1];
+      param->curve_out_y *= next_scale[1];
     }
   }
 }
@@ -1364,9 +1412,12 @@ int BKE_pchan_bbone_spline_compute(BBoneSplineParameters *param,
   CLAMP_MIN(param->scale_in_len, 0.0001f);
   CLAMP_MIN(param->scale_out_len, 0.0001f);
 
+  const float log_scale_in_len = logf(param->scale_in_len);
+  const float log_scale_out_len = logf(param->scale_out_len);
+
   for (int i = 0; i < param->segments; i++) {
-    float fac = (0.5f + i) / param->segments;
-    segment_scales[i] = interpf(param->scale_out_len, param->scale_in_len, fac);
+    const float fac = ((float)i) / (param->segments - 1);
+    segment_scales[i] = expf(interpf(log_scale_out_len, log_scale_in_len, fac));
   }
 
   /* Compute segment vertex offsets along the curve length. */

@@ -592,6 +592,10 @@ static void do_versions_291_fcurve_handles_limit(FCurve *fcu)
 static void do_version_bones_bbone_len_scale(ListBase *lb)
 {
   LISTBASE_FOREACH (Bone *, bone, lb) {
+    if (bone->flag & BONE_ADD_PARENT_END_ROLL) {
+      bone->bbone_flag |= BBONE_ADD_PARENT_END_ROLL;
+    }
+
     bone->scale_in_len = bone->scale_out_len = 1.0f;
 
     do_version_bones_bbone_len_scale(&bone->childbase);

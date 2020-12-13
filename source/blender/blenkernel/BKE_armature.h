@@ -90,6 +90,10 @@ typedef struct EditBone {
   /** Type of next/prev bone handles */
   char bbone_prev_type;
   char bbone_next_type;
+  /** B-Bone flags. */
+  int bbone_flag;
+  short bbone_prev_flag;
+  short bbone_next_flag;
   /** Next/prev bones to use as handle references when calculating bbones (optional) */
   struct EditBone *bbone_prev;
   struct EditBone *bbone_next;

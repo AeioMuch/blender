@@ -100,7 +100,8 @@ EditBone *ED_armature_ebone_add(bArmature *arm, const char *name)
   bone->scale_out_x = 1.0f;
   bone->scale_out_y = 1.0f;
   bone->scale_out_len = 1.0f;
-  // bone->flag |= BONE_SCALE_EASING | BONE_SCALE_SEGMENTS;
+
+  bone->bbone_flag = BBONE_SCALE_EASING | BBONE_SCALE_SEGMENTS;
 
   return bone;
 }
@@ -1263,6 +1264,10 @@ static int armature_symmetrize_exec(bContext *C, wmOperator *op)
         /* Sync bbone handle types */
         ebone->bbone_prev_type = ebone_iter->bbone_prev_type;
         ebone->bbone_next_type = ebone_iter->bbone_next_type;
+
+        ebone->bbone_flag = ebone_iter->bbone_flag;
+        ebone->bbone_prev_flag = ebone_iter->bbone_prev_flag;
+        ebone->bbone_next_flag = ebone_iter->bbone_next_flag;
 
         /* Lets try to fix any constraint subtargets that might
          * have been duplicated

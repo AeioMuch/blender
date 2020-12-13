@@ -1090,7 +1090,7 @@ static void ebone_spline_preview(EditBone *ebone, const float result_array[MAX_B
   param.segments = ebone->segments;
   param.length = ebone->length;
 
-  param.do_scale_segments = !!(ebone->flag & BONE_SCALE_SEGMENTS);
+  param.do_scale_segments = !!(ebone->bbone_flag & BBONE_SCALE_SEGMENTS);
 
   /* Get "next" and "prev" bones - these are used for handle calculations. */
   if (ebone->bbone_prev_type == BBONE_HANDLE_AUTO) {
@@ -1169,7 +1169,7 @@ static void ebone_spline_preview(EditBone *ebone, const float result_array[MAX_B
   param.roll1 = ebone->roll1;
   param.roll2 = ebone->roll2;
 
-  if (prev && (ebone->flag & BONE_ADD_PARENT_END_ROLL)) {
+  if (prev && (ebone->bbone_flag & BBONE_ADD_PARENT_END_ROLL)) {
     param.roll1 += prev->roll2;
   }
 
@@ -1187,7 +1187,7 @@ static void ebone_spline_preview(EditBone *ebone, const float result_array[MAX_B
   param.curve_out_x = ebone->curve_out_x;
   param.curve_out_y = ebone->curve_out_y;
 
-  if (ebone->flag & BONE_SCALE_EASING) {
+  if (ebone->bbone_flag & BBONE_SCALE_EASING) {
     param.ease1 *= param.scale_in_len;
     param.curve_in_x *= param.scale_in_len;
     param.curve_in_y *= param.scale_in_len;
